@@ -3,7 +3,7 @@
   "displayName": "Auto Reload From Disk (Cursor & VS Code)",
   "description": "Auto-reloads open editors when files change on disk in Cursor and VS Code (only if not dirty).",
   "version": "0.0.2",
-  "publisher": "Umeyir",
+  "publisher": "umeyir061",
   "license": "MIT",
   "keywords": [
     "cursor",
