@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.3
+
+- Updated extension marketplace description for clearer Cursor & VS Code positioning.
+- Added runtime/performance optimizations:
+  - queued external watcher sync to avoid race conditions
+  - non-overlapping polling guard
+  - selective watcher restarts on relevant config changes
+
 ## 0.0.2
 
 - Added status bar `Auto Refresh: ON/OFF` toggle.

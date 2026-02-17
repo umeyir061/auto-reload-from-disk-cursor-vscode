@@ -1,8 +1,8 @@
 {
   "name": "auto-reload-from-disk-cursor-vscode",
   "displayName": "Auto Reload From Disk (Cursor & VS Code)",
-  "description": "Auto-reloads open editors when files change on disk in Cursor and VS Code (only if not dirty).",
-  "version": "0.0.2",
+  "description": "Automatically reloads open files when they change on disk in Cursor & VS Code (only when not dirty), with workspace-external support and a status-bar ON/OFF toggle.",
+  "version": "0.0.3",
   "publisher": "umeyir061",
   "license": "MIT",
   "keywords": [

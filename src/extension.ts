@@ -60,6 +60,7 @@ async function statMtimeMs(fsPath: string): Promise<number | undefined> {
 export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel("Auto Reload From Disk");
   context.subscriptions.push(output);
+
   const statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10_000);
   statusItem.command = "autoReloadFromDisk.toggleEnabled";
   context.subscriptions.push(statusItem);
@@ -74,9 +75,12 @@ export function activate(context: vscode.ExtensionContext) {
   const inFlight = new Set<string>();
   const lastEventAt = new Map<string, number>();
   const lastDirtyNotifyAt = new Map<string, number>();
+
   let workspaceWatcher: vscode.Disposable | undefined;
   let pollHandle: NodeJS.Timeout | undefined;
+  let pollInProgress = false;
   let isRuntimeEnabled = false;
+  let syncWatchersQueue: Promise<void> = Promise.resolve();
 
   const findOpenDocByPath = (normalizedPath: string): vscode.TextDocument | undefined =>
     vscode.workspace.textDocuments.find(
@@ -119,7 +123,7 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   const maybeReloadForUri = async (changedUri: vscode.Uri, source: string) => {
-    if (!isEnabled()) return;
+    if (!isRuntimeEnabled) return;
     if (changedUri.scheme !== "file") return;
 
     const changedPath = normalizeFsPath(changedUri);
@@ -196,6 +200,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
   };
 
+  const queueSyncExternalWatchers = () => {
+    syncWatchersQueue = syncWatchersQueue
+      .then(() => syncExternalWatchers())
+      .catch((err) => {
+        log(`syncExternalWatchers failed: ${String(err)}`);
+      });
+  };
+
   const stopExternalWatchers = () => {
     for (const watcher of externalWatchers.values()) watcher.close();
     externalWatchers.clear();
@@ -240,27 +252,41 @@ export function activate(context: vscode.ExtensionContext) {
 
   const restartPolling = () => {
     if (pollHandle) clearInterval(pollHandle);
+
     const interval = getPollIntervalMs();
     pollHandle = setInterval(() => {
-      void pollForExternalChanges();
+      if (pollInProgress) return;
+      pollInProgress = true;
+
+      void (async () => {
+        try {
+          await pollForExternalChanges();
+        } finally {
+          pollInProgress = false;
+        }
+      })();
     }, interval);
+
     log(`Polling started with interval: ${interval}ms`);
   };
 
   const stopRuntime = () => {
     workspaceWatcher?.dispose();
     workspaceWatcher = undefined;
+
     if (pollHandle) {
       clearInterval(pollHandle);
       pollHandle = undefined;
     }
+
+    pollInProgress = false;
     stopExternalWatchers();
   };
 
   const startRuntime = () => {
     restartWorkspaceWatcher();
     restartPolling();
-    void syncExternalWatchers();
+    queueSyncExternalWatchers();
   };
 
   const applyEnabledState = () => {
@@ -309,6 +335,7 @@ export function activate(context: vscode.ExtensionContext) {
   const manual = vscode.commands.registerCommand("autoReloadFromDisk.reloadActive", async () => {
     await vscode.commands.executeCommand("workbench.action.files.revert");
   });
+
   const toggle = vscode.commands.registerCommand("autoReloadFromDisk.toggleEnabled", async () => {
     const enabled = isEnabled();
     await setEnabled(!enabled);
@@ -316,20 +343,39 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(manual, toggle);
 
-  const onOpen = vscode.workspace.onDidOpenTextDocument(() => void syncExternalWatchers());
-  const onClose = vscode.workspace.onDidCloseTextDocument(() => void syncExternalWatchers());
+  const onOpen = vscode.workspace.onDidOpenTextDocument(() => queueSyncExternalWatchers());
+  const onClose = vscode.workspace.onDidCloseTextDocument(() => queueSyncExternalWatchers());
   const onSave = vscode.workspace.onDidSaveTextDocument((doc) => {
     if (!shouldWatchDocument(doc)) return;
     void refreshKnownMtime(doc);
   });
+
   const onConfig = vscode.workspace.onDidChangeConfiguration((event) => {
     if (!event.affectsConfiguration(CONFIG_ROOT)) return;
+
+    const wasEnabled = isRuntimeEnabled;
     applyEnabledState();
-    if (isEnabled()) {
-      restartWorkspaceWatcher();
-      restartPolling();
-      void syncExternalWatchers();
+
+    if (!isRuntimeEnabled) {
+      updateStatusBar();
+      log("Configuration changed while extension disabled");
+      return;
     }
+
+    if (!wasEnabled && isRuntimeEnabled) {
+      updateStatusBar();
+      log("Configuration changed and extension started");
+      return;
+    }
+
+    if (event.affectsConfiguration(`${CONFIG_ROOT}.glob`)) {
+      restartWorkspaceWatcher();
+    }
+    if (event.affectsConfiguration(`${CONFIG_ROOT}.pollIntervalMs`)) {
+      restartPolling();
+    }
+
+    queueSyncExternalWatchers();
     updateStatusBar();
     log("Configuration changed and watchers restarted");
   });

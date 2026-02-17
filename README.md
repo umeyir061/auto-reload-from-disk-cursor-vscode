@@ -14,6 +14,12 @@ Compatibility: Works on editors that support the VS Code Extension API (for exam
 - Status bar toggle: `Auto Refresh: ON/OFF`.
 - Optional fallback polling for environments where file watch events are unreliable.
 
+## Important Note
+
+Even when this extension is OFF (or uninstalled), editors like Cursor/VS Code may still update file content automatically due to their built-in external file change behavior.
+
+This extension controls only its own reload logic.
+
 ## Commands
 
 - `Auto Reload: Reload Active File From Disk`
@@ -70,6 +76,12 @@ Uyumluluk: VS Code Extension API destekleyen editorlerde calisir (ornegin Cursor
 - Kaydedilmemis degisiklikleri (dirty) korur.
 - Durum cubugunda `Auto Refresh: ON/OFF` anahtari vardir.
 - Gerekirse polling fallback ile degisiklik yakalar.
+
+### Onemli Not
+
+Bu eklenti OFF olsa bile (hatta kaldirilsa bile), Cursor/VS Code kendi yerlesik dis dosya degisimi davranisi nedeniyle dosya icerigini otomatik guncelleyebilir.
+
+Bu eklenti yalnizca kendi reload mantigini kontrol eder.
 
 ### Komutlar
 
