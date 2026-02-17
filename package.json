@@ -1,0 +1,99 @@
+{
+  "name": "auto-reload-from-disk-cursor-vscode",
+  "displayName": "Auto Reload From Disk (Cursor & VS Code)",
+  "description": "Auto-reloads open editors when files change on disk in Cursor and VS Code (only if not dirty).",
+  "version": "0.0.2",
+  "publisher": "Umeyir",
+  "license": "MIT",
+  "keywords": [
+    "cursor",
+    "vscode",
+    "autoreload",
+    "reload",
+    "filesystem"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/umeyir/cursor-auto-reload-from-disk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/umeyir/cursor-auto-reload-from-disk/issues"
+  },
+  "homepage": "https://github.com/umeyir/cursor-auto-reload-from-disk#readme",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Auto Reload From Disk",
+      "properties": {
+        "autoReloadFromDisk.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic reload from disk for open, non-dirty editors."
+        },
+        "autoReloadFromDisk.glob": {
+          "type": "string",
+          "default": "**/*",
+          "description": "Glob pattern to watch for external changes."
+        },
+        "autoReloadFromDisk.notifyOnDirty": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a notification when a watched file changes but the editor is dirty."
+        },
+        "autoReloadFromDisk.stealFocusOnReload": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow the extension to focus the changed editor before reloading when required by host APIs."
+        },
+        "autoReloadFromDisk.pollIntervalMs": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 250,
+          "maximum": 60000,
+          "description": "Polling interval in milliseconds for fallback file change detection."
+        },
+        "autoReloadFromDisk.debounceMs": {
+          "type": "number",
+          "default": 300,
+          "minimum": 50,
+          "maximum": 5000,
+          "description": "Debounce window in milliseconds to prevent duplicate reload triggers."
+        },
+        "autoReloadFromDisk.debugLogs": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logs in the 'Auto Reload From Disk' output channel."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "autoReloadFromDisk.reloadActive",
+        "title": "Auto Reload: Reload Active File From Disk"
+      },
+      {
+        "command": "autoReloadFromDisk.toggleEnabled",
+        "title": "Auto Reload: Toggle On/Off"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "@vscode/vsce": "^3.7.1",
+    "typescript": "^5.9.3"
+  }
+}

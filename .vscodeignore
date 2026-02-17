@@ -1,0 +1,9 @@
+src/**
+node_modules/**
+tsconfig.json
+package-lock.json
+*.vsix
+**/*.map
+.vscode/**
+.vscode-test/**
+**/.DS_Store
